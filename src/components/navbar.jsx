@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 
 const navItems = [
   { label: "Accueil", path: "/" },
@@ -15,10 +15,15 @@ const navItems = [
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [activeSection, setActiveSection] = useState(null);
 
-  /* =========================================
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  /* =====================================================
      SCROLL STATE
-  ========================================= */
+  ===================================================== */
+
   useEffect(() => {
     const handleScroll = () => {
       setScrolled(window.scrollY > 24);
@@ -26,16 +31,75 @@ export default function Navbar() {
 
     handleScroll();
 
-    window.addEventListener("scroll", handleScroll, { passive: true });
+    window.addEventListener("scroll", handleScroll, {
+      passive: true,
+    });
 
     return () => {
       window.removeEventListener("scroll", handleScroll);
     };
   }, []);
 
-  /* =========================================
-     PREVENT BODY SCROLL WHEN MOBILE MENU OPEN
-  ========================================= */
+  /* =====================================================
+     SCROLL SPY
+  ===================================================== */
+
+  useEffect(() => {
+    if (location.pathname !== "/") {
+      setActiveSection(null);
+      return;
+    }
+
+    const sections = navItems
+      .filter((item) => item.path.startsWith("#"))
+      .map((item) =>
+        document.getElementById(item.path.substring(1))
+      )
+      .filter(Boolean);
+
+    if (!sections.length) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visibleSections = entries
+          .filter((entry) => entry.isIntersecting)
+          .sort(
+            (a, b) =>
+              b.intersectionRatio - a.intersectionRatio
+          );
+
+        if (visibleSections.length > 0) {
+          setActiveSection(
+            `#${visibleSections[0].target.id}`
+          );
+        }
+      },
+      {
+        root: null,
+
+        /*
+         * Navbar area excluded from detection.
+         * This makes the active section more stable.
+         */
+        rootMargin: "-20% 0px -60% 0px",
+
+        threshold: [0, 0.1, 0.25, 0.5, 0.75, 1],
+      }
+    );
+
+    sections.forEach((section) => {
+      observer.observe(section);
+    });
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [location.pathname]);
+
+  /* =====================================================
+     MOBILE BODY SCROLL
+  ===================================================== */
+
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = "hidden";
@@ -48,9 +112,10 @@ export default function Navbar() {
     };
   }, [isOpen]);
 
-  /* =========================================
-     CLOSE MENU WITH ESC
-  ========================================= */
+  /* =====================================================
+     ESCAPE
+  ===================================================== */
+
   useEffect(() => {
     const handleKeyDown = (event) => {
       if (event.key === "Escape") {
@@ -65,68 +130,134 @@ export default function Navbar() {
     };
   }, []);
 
-  /* =========================================
+  /* =====================================================
      NAVIGATION
-  ========================================= */
+  ===================================================== */
+
   const handleNavigation = (path) => {
     setIsOpen(false);
 
+    /* -----------------------------------------------
+       HOME
+    ------------------------------------------------ */
+
     if (path === "/") {
-      window.location.href = "/";
+      if (location.pathname === "/") {
+        setActiveSection(null);
+
+        window.scrollTo({
+          top: 0,
+          behavior: "smooth",
+        });
+      } else {
+        navigate("/");
+      }
+
       return;
     }
 
-    if (path.startsWith("#")) {
-      const element = document.querySelector(path);
+    /* -----------------------------------------------
+       SECTION
+    ------------------------------------------------ */
 
-      if (element) {
-        element.scrollIntoView({
-          behavior: "smooth",
-          block: "start",
-        });
-      } else {
-        window.location.hash = path;
+    if (path.startsWith("#")) {
+      const sectionId = path.substring(1);
+
+      /*
+       * Already on homepage
+       */
+      if (location.pathname === "/") {
+        const element = document.getElementById(sectionId);
+
+        if (element) {
+          setActiveSection(path);
+
+          /*
+           * Account for fixed navbar
+           */
+          const navbarHeight = 90;
+
+          const elementPosition =
+            element.getBoundingClientRect().top +
+            window.scrollY;
+
+          window.scrollTo({
+            top: elementPosition - navbarHeight,
+            behavior: "smooth",
+          });
+        }
+
+        return;
       }
+
+      /*
+       * Coming from another route
+       */
+      navigate(`/${path}`);
     }
   };
 
-  /* =========================================
-     ACTIVE SECTION
-  ========================================= */
+  /* =====================================================
+     ACTIVE STATE
+  ===================================================== */
+
   const isActive = (path) => {
+    /*
+     * Home
+     */
     if (path === "/") {
       return (
-        window.location.pathname === "/" &&
-        !window.location.hash
+        location.pathname === "/" &&
+        activeSection === null
       );
     }
 
+    /*
+     * Sections
+     */
     if (path.startsWith("#")) {
-      return window.location.hash === path;
+      return (
+        location.pathname === "/" &&
+        activeSection === path
+      );
     }
 
-    return window.location.pathname.startsWith(path);
+    return false;
   };
 
   return (
     <>
-      {/* =====================================================
+      {/* =================================================
           HEADER
-      ===================================================== */}
+      ================================================= */}
+
       <header
         className={`
-          fixed inset-x-0 top-0 z-50
-          transition-all duration-500 ease-out
+          fixed
+          inset-x-0
+          top-0
+          z-50
+          transition-all
+          duration-500
+          ease-out
 
           ${
             scrolled
               ? `
-                border-b border-text/5
-                bg-background/90
+                border-b
+                border-text/5
+                bg-background/95
                 shadow-[0_10px_40px_rgba(37,48,45,0.06)]
                 backdrop-blur-xl
               `
-              : "bg-transparent"
+              : `
+                bg-background/90
+                backdrop-blur-xl
+
+                lg:border-transparent
+                lg:bg-transparent
+                lg:backdrop-blur-none
+              `
           }
         `}
       >
@@ -137,6 +268,7 @@ export default function Navbar() {
             max-w-[1440px]
             items-center
             justify-between
+            gap-4
             px-5
             sm:px-7
             md:px-10
@@ -148,13 +280,14 @@ export default function Navbar() {
             ${
               scrolled
                 ? "py-3"
-                : "py-5 md:py-6"
+                : "py-4 sm:py-5 md:py-6"
             }
           `}
         >
           {/* =================================================
               LOGO
           ================================================= */}
+
           <button
             type="button"
             onClick={() => handleNavigation("/")}
@@ -162,24 +295,33 @@ export default function Navbar() {
             className="
               group
               relative
-              shrink-0
+              min-w-0
+              max-w-[calc(100%-60px)]
+              shrink
               text-left
               outline-none
             "
           >
+            {/* Name */}
+
             <span
               className="
                 block
+                truncate
                 font-serif
-                text-[15px]
+                text-[13px]
                 font-medium
-                tracking-[0.08em]
+                leading-tight
+                tracking-[0.06em]
                 text-text
                 transition-colors
                 duration-300
 
-                sm:text-[17px]
+                sm:text-[16px]
+                sm:tracking-[0.07em]
+
                 md:text-[19px]
+                md:tracking-[0.08em]
 
                 group-hover:text-gold
               "
@@ -187,21 +329,28 @@ export default function Navbar() {
               MERIEM TAHIRI JOUTEI
             </span>
 
+            {/* Subtitle */}
+
             <span
               className="
                 mt-1
                 block
+                truncate
                 font-sans
-                text-[8px]
+                text-[7px]
                 font-medium
                 uppercase
-                tracking-[0.28em]
+                leading-none
+                tracking-[0.22em]
                 text-muted
                 transition-colors
                 duration-300
 
                 sm:text-[9px]
+                sm:tracking-[0.25em]
+
                 md:text-[10px]
+                md:tracking-[0.28em]
 
                 group-hover:text-gold
               "
@@ -209,7 +358,8 @@ export default function Navbar() {
               Executive Coach
             </span>
 
-            {/* Animated logo line */}
+            {/* Logo underline */}
+
             <span
               className="
                 absolute
@@ -229,6 +379,7 @@ export default function Navbar() {
           {/* =================================================
               DESKTOP NAVIGATION
           ================================================= */}
+
           <ul
             className="
               hidden
@@ -247,7 +398,9 @@ export default function Navbar() {
                 <li key={item.label}>
                   <button
                     type="button"
-                    onClick={() => handleNavigation(item.path)}
+                    onClick={() =>
+                      handleNavigation(item.path)
+                    }
                     className={`
                       group
                       relative
@@ -273,7 +426,6 @@ export default function Navbar() {
                   >
                     {item.label}
 
-                    {/* Underline */}
                     <span
                       className={`
                         absolute
@@ -301,9 +453,18 @@ export default function Navbar() {
           {/* =================================================
               RIGHT ACTIONS
           ================================================= */}
-          <div className="flex items-center gap-3 sm:gap-4">
 
+          <div
+            className="
+              flex
+              shrink-0
+              items-center
+              gap-3
+              sm:gap-4
+            "
+          >
             {/* Desktop CTA */}
+
             <Link
               to="/booking"
               className="
@@ -353,10 +514,15 @@ export default function Navbar() {
               </span>
             </Link>
 
-            {/* Mobile menu button */}
+            {/* =================================================
+                MOBILE BUTTON
+            ================================================= */}
+
             <button
               type="button"
-              onClick={() => setIsOpen((prev) => !prev)}
+              onClick={() =>
+                setIsOpen((prev) => !prev)
+              }
               aria-label={
                 isOpen
                   ? "Fermer le menu"
@@ -383,6 +549,8 @@ export default function Navbar() {
                 lg:hidden
               "
             >
+              {/* Line 1 */}
+
               <span
                 className={`
                   absolute
@@ -391,6 +559,7 @@ export default function Navbar() {
                   bg-current
                   transition-all
                   duration-300
+
                   ${
                     isOpen
                       ? "rotate-45"
@@ -398,6 +567,8 @@ export default function Navbar() {
                   }
                 `}
               />
+
+              {/* Line 2 */}
 
               <span
                 className={`
@@ -407,6 +578,7 @@ export default function Navbar() {
                   bg-current
                   transition-all
                   duration-200
+
                   ${
                     isOpen
                       ? "scale-0 opacity-0"
@@ -414,6 +586,8 @@ export default function Navbar() {
                   }
                 `}
               />
+
+              {/* Line 3 */}
 
               <span
                 className={`
@@ -423,6 +597,7 @@ export default function Navbar() {
                   bg-current
                   transition-all
                   duration-300
+
                   ${
                     isOpen
                       ? "-rotate-45"
@@ -438,6 +613,7 @@ export default function Navbar() {
       {/* =====================================================
           MOBILE MENU
       ===================================================== */}
+
       <div
         className={`
           fixed
@@ -456,10 +632,10 @@ export default function Navbar() {
         `}
         aria-hidden={!isOpen}
       >
-
-        {/* ===============================================
+        {/* =================================================
             OVERLAY
-        =============================================== */}
+        ================================================= */}
+
         <button
           type="button"
           aria-label="Fermer le menu"
@@ -473,9 +649,10 @@ export default function Navbar() {
           "
         />
 
-        {/* ===============================================
-            MENU PANEL
-        =============================================== */}
+        {/* =================================================
+            PANEL
+        ================================================= */}
+
         <aside
           className={`
             absolute
@@ -490,7 +667,7 @@ export default function Navbar() {
             bg-background
             px-6
             pb-8
-            pt-28
+            pt-24
             shadow-[-20px_0_60px_rgba(37,48,45,0.12)]
 
             transition-transform
@@ -509,64 +686,67 @@ export default function Navbar() {
           aria-modal="true"
           aria-label="Menu de navigation"
         >
+          {/* =================================================
+              MOBILE MENU HEADER
+          ================================================= */}
 
-          {/* ============================================
-              TOP DECORATION
-          ============================================ */}
-          <div
-            className="
-              absolute
-              left-6
-              top-20
-              h-px
-              w-12
-              bg-gold
-
-              sm:left-8
-            "
-          />
-
-          <div className="mb-7 flex items-center justify-between">
-            <div>
-              <p
-                className="
-                  font-sans
-                  text-[9px]
-                  font-medium
-                  uppercase
-                  tracking-[0.3em]
-                  text-muted
-                "
-              >
-                Navigation
-              </p>
-
-              <p
-                className="
-                  mt-2
-                  font-serif
-                  text-xl
-                  text-text
-                "
-              >
-                Explorer
-              </p>
-            </div>
-
-            <span
+          <div className="mb-8">
+            <div
               className="
-                font-serif
-                text-2xl
-                text-gold
+                mb-5
+                h-px
+                w-12
+                bg-gold
               "
-            >
-              MTJ
-            </span>
+            />
+
+            <div className="flex items-end justify-between">
+              <div>
+                <p
+                  className="
+                    font-sans
+                    text-[9px]
+                    font-medium
+                    uppercase
+                    tracking-[0.3em]
+                    text-muted
+                  "
+                >
+                  Navigation
+                </p>
+
+                <h2
+                  className="
+                    mt-2
+                    font-serif
+                    text-2xl
+                    font-normal
+                    leading-none
+                    text-text
+                  "
+                >
+                  Explorer
+                </h2>
+              </div>
+
+              <span
+                className="
+                  font-serif
+                  text-2xl
+                  font-medium
+                  tracking-tight
+                  text-gold
+                "
+              >
+                MTJ
+              </span>
+            </div>
           </div>
 
-          {/* ============================================
+          {/* =================================================
               MOBILE LINKS
-          ============================================ */}
+          ================================================= */}
+
           <ul className="border-t border-text/10">
             {navItems.map((item, index) => {
               const active = isActive(item.path);
@@ -619,17 +799,12 @@ export default function Navbar() {
                       }
                     `}
                   >
-                    <span
-                      className="
-                        flex
-                        items-center
-                        gap-4
-                        font-serif
-                        text-xl
-                      "
-                    >
+                    {/* Number + Label */}
+
+                    <span className="flex items-center gap-4">
                       <span
                         className={`
+                          w-5
                           font-sans
                           text-[9px]
                           tracking-[0.1em]
@@ -643,11 +818,21 @@ export default function Navbar() {
                           }
                         `}
                       >
-                        0{index + 1}
+                        {String(index + 1).padStart(2, "0")}
                       </span>
 
-                      {item.label}
+                      <span
+                        className="
+                          font-serif
+                          text-xl
+                          font-normal
+                        "
+                      >
+                        {item.label}
+                      </span>
                     </span>
+
+                    {/* Arrow */}
 
                     <span
                       className="
@@ -666,9 +851,10 @@ export default function Navbar() {
             })}
           </ul>
 
-          {/* ============================================
+          {/* =================================================
               MOBILE CTA
-          ============================================ */}
+          ================================================= */}
+
           <div
             className={`
               mt-8
@@ -727,9 +913,10 @@ export default function Navbar() {
             </Link>
           </div>
 
-          {/* ============================================
+          {/* =================================================
               MOBILE FOOTER BRAND
-          ============================================ */}
+          ================================================= */}
+
           <div
             className="
               mt-auto
