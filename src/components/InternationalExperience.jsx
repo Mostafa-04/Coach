@@ -16,6 +16,7 @@ const InternationalExperience = () => {
 
   return (
     <section
+    id="experience"
       className="
         relative overflow-hidden
         border-t border-text/10

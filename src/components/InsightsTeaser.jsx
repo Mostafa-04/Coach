@@ -8,7 +8,7 @@ const InsightsTeaser = () => {
       image:
         "https://images.unsplash.com/photo-1552664730-d307ca884978?q=80&w=1000&auto=format&fit=crop",
       alt: "Leadership et prise de recul",
-      href: "article.html",
+      href: "/",
     },
     {
       number: "02",
@@ -18,7 +18,7 @@ const InsightsTeaser = () => {
       image:
         "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?q=80&w=1000&auto=format&fit=crop",
       alt: "Manager et impact",
-      href: "article.html",
+      href: "/",
     },
     {
       number: "03",
@@ -28,12 +28,13 @@ const InsightsTeaser = () => {
       image:
         "https://images.unsplash.com/photo-1519222970733-f546218fa6d7?q=80&w=1000&auto=format&fit=crop",
       alt: "Transition professionnelle",
-      href: "article.html",
+      href: "/",
     },
   ];
 
   return (
     <section
+      id="insights"
       className="
         border-t border-text/10
         px-6 py-20

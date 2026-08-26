@@ -33,7 +33,7 @@ const Expertise = () => {
   ];
 
   return (
-    <section className="border-t border-text/10 px-6 py-20 sm:px-8 md:px-10 md:py-28 lg:py-32">
+    <section id="expertise" className="border-t border-text/10 px-6 py-20 sm:px-8 md:px-10 md:py-28 lg:py-32">
       <div className="mx-auto max-w-[1440px]">
 
         {/* ================= HEADER ================= */}

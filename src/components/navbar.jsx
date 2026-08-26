@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 
 const navItems = [
   { label: "Accueil", path: "/" },
@@ -303,8 +304,8 @@ export default function Navbar() {
           <div className="flex items-center gap-3 sm:gap-4">
 
             {/* Desktop CTA */}
-            <a
-              href="/booking"
+            <Link
+              to="/booking"
               className="
                 group
                 hidden
@@ -350,7 +351,7 @@ export default function Navbar() {
               >
                 →
               </span>
-            </a>
+            </Link>
 
             {/* Mobile menu button */}
             <button
@@ -682,8 +683,8 @@ export default function Navbar() {
               }
             `}
           >
-            <a
-              href="/booking"
+            <Link
+              to="/booking"
               onClick={() => setIsOpen(false)}
               className="
                 group
@@ -723,7 +724,7 @@ export default function Navbar() {
               >
                 →
               </span>
-            </a>
+            </Link>
           </div>
 
           {/* ============================================

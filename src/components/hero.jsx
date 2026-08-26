@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 const Hero = () => {
   return (
     <section
@@ -177,8 +178,8 @@ const Hero = () => {
             "
           >
             {/* Primary CTA */}
-            <a
-              href="/booking"
+            <Link
+              to="/booking"
               className="
                 group
                 inline-flex
@@ -215,7 +216,7 @@ const Hero = () => {
               >
                 →
               </span>
-            </a>
+            </Link>
 
             {/* Secondary CTA */}
             <a

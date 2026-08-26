@@ -2,7 +2,7 @@ const About = () => {
   return (
     <>
       {/* ================= ABOUT ================= */}
-      <section className="px-6 py-20 sm:px-8 md:px-10 md:py-28 lg:py-32">
+      <section id="about" className="px-6 py-20 sm:px-8 md:px-10 md:py-28 lg:py-32">
         <div className="mx-auto grid max-w-[1440px] items-center gap-14 lg:grid-cols-12 lg:gap-20">
           
           {/* Image */}

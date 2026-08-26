@@ -1,6 +1,8 @@
+import { Link } from "react-router-dom";
 const FinalCTA = () => {
   return (
     <section
+    id="contact"
       className="
         relative
         overflow-hidden
@@ -119,8 +121,8 @@ const FinalCTA = () => {
         {/* ================= CTA ================= */}
         <div className="mt-10 flex justify-center">
 
-          <a
-            href="booking.html"
+          <Link
+            to="/booking"
             className="
               group
               relative
@@ -176,7 +178,7 @@ const FinalCTA = () => {
                 group-hover:w-full
               "
             />
-          </a>
+          </Link>
 
         </div>
 

@@ -27,7 +27,7 @@ const CoachingApproach = () => {
   ];
 
   return (
-    <section className="relative overflow-hidden bg-text px-6 py-20 sm:px-8 md:px-10 md:py-28 lg:py-32">
+    <section id="approach" className="relative overflow-hidden bg-text px-6 py-20 sm:px-8 md:px-10 md:py-28 lg:py-32">
       
       {/* Decorative background */}
       <div
